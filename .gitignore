@@ -1,0 +1,5 @@
+# 仮想環境
+.venv/
+__pycache__/
+# 取得した第三者の生データは再配布しない（GitHub Actions が毎回取り直す）
+data/raw/

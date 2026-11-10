@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FIRE Simulator ― 全世界株で描く、自由までの道のり</title>
+<meta name="description" content="全世界株式のインデックスファンドに積み立てたとき、何歳で経済的自由（FIRE）に届き、資産が何歳まで持つのかを、1871年からの相場の歴史で確かめる無料のシミュレーター">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23102a45'/%3E%3Ccircle cx='32' cy='40' r='14' fill='%23f5c66b'/%3E%3Crect x='10' y='40' width='44' height='3' rx='1.5' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=8">
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 40 40" aria-hidden="true">
+        <defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd98a"/><stop offset="1" stop-color="#f29a4a"/></linearGradient></defs>
+        <rect width="40" height="40" rx="11" fill="#0f2238"/>
+        <circle cx="20" cy="25" r="9" fill="url(#lg)"/>
+        <path d="M6 25h28" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+        <path d="M9 31h22M13 36h14" stroke="#ffffff80" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+      <div>
+        <div class="brand-name">FIRE Simulator</div>
+        <div class="brand-sub">全世界株で描く、自由までの道のり</div>
+      </div>
+    </div>
+    <div class="top-actions">
+      <div class="nav-chip" id="navChip" title="シミュレーションに使っている相場データの期間">
+        <span class="dot"></span><span id="navText">—</span>
+      </div>
+      <button class="icon-btn" id="shareBtn" title="この条件のリンクをコピー" aria-label="共有リンクをコピー">
+        <svg viewBox="0 0 24 24"><path d="M10 14a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.5 1.5"/><path d="M14 10a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.5-1.5"/></svg>
+      </button>
+      <button class="icon-btn" id="themeBtn" title="ライト／ダークを切り替え" aria-label="テーマを切り替え">
+        <svg viewBox="0 0 24 24" class="i-sun"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        <svg viewBox="0 0 24 24" class="i-moon"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- ============ 入力 ============ -->
+    <aside class="panel inputs" id="inputs">
+      <div class="inputs-head">
+        <h2>あなたの条件</h2>
+        <button class="text-btn" id="resetBtn">初期値に戻す</button>
+      </div>
+
+      <section class="group" data-open>
+        <h3><span class="num">1</span>あなた</h3>
+        <div class="field" data-key="age" data-min="18" data-max="70" data-step="1" data-unit="歳">今の年齢</div>
+        <div class="field" data-key="endAge" data-min="70" data-max="105" data-step="1" data-unit="歳" data-hint="資産が尽きないかを、この年齢まで確かめます">何歳まで見るか</div>
+      </section>
+
+      <section class="group">
+        <h3><span class="num">2</span>今の資産（全世界株式）</h3>
+        <div class="field" data-key="nisa" data-min="0" data-max="10000" data-step="10" data-unit="万円" data-slider-max="3000">NISA口座</div>
+        <div class="field" data-key="taxable" data-min="0" data-max="50000" data-step="10" data-unit="万円" data-slider-max="5000">特定口座（課税）</div>
+        <details class="more">
+          <summary>元本（取得額）</summary>
+          <div class="field" data-key="nisaBasis" data-min="0" data-max="1800" data-step="10" data-unit="万円" data-hint="NISAの生涯枠1,800万円の使用分">NISAの元本</div>
+          <div class="field" data-key="taxableBasis" data-min="0" data-max="50000" data-step="10" data-unit="万円" data-slider-max="5000" data-hint="売るときは評価額との差（含み益）に20.315%かかります">特定口座の元本</div>
+        </details>
+      </section>
+
+      <section class="group">
+        <h3><span class="num">3</span>毎月の積立</h3>
+        <div class="field" data-key="monthly" data-min="0" data-max="200" data-step="0.5" data-unit="万円/月" data-slider-max="50">月の積立額</div>
+        <div class="field" data-key="bonus" data-min="0" data-max="1000" data-step="5" data-unit="万円/年" data-slider-max="200">ボーナスからの積立</div>
+        <div class="field" data-key="contribGrowth" data-min="-5" data-max="10" data-step="0.5" data-unit="%/年" data-hint="昇給などで積立額が物価以上に伸びる率（物価分は自動で増えます）">積立額の伸び</div>
+      </section>
+
+      <section class="group">
+        <h3><span class="num">4</span>FIREの条件</h3>
+        <div class="seg" data-key="fireMode">
+          <button data-v="target">目標額に届いたら</button>
+          <button data-v="age">年齢で決める</button>
+        </div>
+        <div class="when" data-when="fireMode=target">
+          <div class="field" data-key="swr" data-min="2" data-max="6" data-step="0.1" data-unit="%" data-hint="目標額 = 年間の生活費 ÷ この率（4%なら25倍）">取り崩し率（目標額の基準）</div>
+          <div class="target-box"><span>目標額</span><strong id="targetText">—</strong></div>
+          <label class="check"><input type="checkbox" data-key="targetManual"> 目標額を自分で決める</label>
+          <div class="when" data-when="targetManual=true">
+            <div class="field" data-key="target" data-min="500" data-max="100000" data-step="100" data-unit="万円" data-slider-max="20000">目標額</div>
+          </div>
+        </div>
+        <div class="when" data-when="fireMode=age">
+          <div class="field" data-key="fireAge" data-min="25" data-max="75" data-step="1" data-unit="歳">FIREする年齢</div>
+        </div>
+        <div class="field" data-key="maxWorkAge" data-min="40" data-max="75" data-step="1" data-unit="歳" data-hint="目標に届かなくても、この年齢で仕事を辞めます（定年）">遅くとも辞める年齢</div>
+      </section>
+
+      <section class="group">
+        <h3><span class="num">5</span>FIRE後の暮らし</h3>
+        <div class="field" data-key="expense" data-min="5" data-max="150" data-step="0.5" data-unit="万円/月" data-slider-max="80" data-hint="今の物価での金額。物価に合わせて自動で増えます">月の生活費</div>
+        <div class="field" data-key="sideIncome" data-min="0" data-max="100" data-step="0.5" data-unit="万円/月" data-slider-max="40" data-hint="サイドFIRE（ゆるく働く）の手取り">副収入</div>
+        <div class="field" data-key="sideUntil" data-min="30" data-max="80" data-step="1" data-unit="歳まで">副収入の期間</div>
+        <div class="field" data-key="pension" data-min="0" data-max="50" data-step="0.5" data-unit="万円/月" data-slider-max="30" data-hint="早く辞めると厚生年金が減ります。ねんきん定期便の見込額を目安に">年金（手取り）</div>
+        <div class="field" data-key="pensionAge" data-min="60" data-max="75" data-step="1" data-unit="歳から">年金の受給開始</div>
+      </section>
+
+      <section class="group">
+        <h3><span class="num">6</span>取り崩し方</h3>
+        <div class="seg" data-key="strategy">
+          <button data-v="fixed">定額</button>
+          <button data-v="percent">定率</button>
+          <button data-v="guardrail">ガードレール</button>
+        </div>
+        <p class="hint when" data-when="strategy=fixed">毎月、生活費（物価連動）から年金・副収入を引いた額を取り崩します。</p>
+        <p class="hint when" data-when="strategy=percent">毎年、その時の資産の一定割合だけを使います。資産は尽きませんが、暮らしの水準が相場で上下します。</p>
+        <p class="hint when" data-when="strategy=guardrail">取り崩し率が当初より2割上がったら生活費を1割減らし、2割下がったら戻します。</p>
+        <div class="when" data-when="strategy=percent">
+          <div class="field" data-key="pctRate" data-min="1" data-max="8" data-step="0.1" data-unit="%/年">毎年使う割合</div>
+        </div>
+        <div class="when" data-when="strategy!=fixed">
+          <div class="field" data-key="floorPct" data-min="40" data-max="100" data-step="5" data-unit="%" data-hint="生活費がこれを下回ったら「失敗」とみなします">許せる生活費の下限</div>
+        </div>
+      </section>
+
+      <section class="group">
+        <h3><span class="num">7</span>ライフイベント</h3>
+        <p class="hint">退職金・相続（＋）や、住宅・車・教育費（−）など一度きりのお金。今の価値で。</p>
+        <div id="events" class="events"></div>
+        <button class="text-btn add" id="addEvent">＋ イベントを追加</button>
+      </section>
+
+      <section class="group">
+        <h3><span class="num">8</span>相場の前提</h3>
+        <div class="seg" data-key="method">
+          <button data-v="hist">歴史</button>
+          <button data-v="boot">ブートストラップ</button>
+          <button data-v="param">想定利回り</button>
+        </div>
+        <p class="hint when" data-when="method=hist">過去の各月を出発点に、実際に起きた相場の順番そのままで人生を重ねます。</p>
+        <p class="hint when" data-when="method=boot">過去の3年分の塊をランダムにつないで、2,000通りの未来を作ります。</p>
+        <p class="hint when" data-when="method=param">一定の期待リターンと値動きの大きさで、2,000通りの未来を作ります。</p>
+        <div class="when" data-when="method!=param">
+          <label class="lbl" for="period">使う期間</label>
+          <select id="period" data-key="period">
+            <option value="all">1871年〜（約155年・推奨）</option>
+            <option value="1973">1973年〜（変動相場制・円建て）</option>
+            <option value="1990">1990年〜（先進国株）</option>
+          </select>
+        </div>
+        <div class="when" data-when="method=param">
+          <div class="field" data-key="mu" data-min="0" data-max="12" data-step="0.1" data-unit="%/年" data-hint="物価上昇を除いた実質の年率（幾何平均）。1871年以降の実績は約6.5%">期待リターン（実質）</div>
+          <div class="field" data-key="sigma" data-min="0" data-max="35" data-step="0.5" data-unit="%/年" data-hint="1871年以降の実績は約15%">値動きの大きさ（σ）</div>
+          <div class="field" data-key="infl" data-min="-1" data-max="6" data-step="0.1" data-unit="%/年">物価上昇率</div>
+        </div>
+      </section>
+
+      <section class="group">
+        <h3><span class="num">9</span>税金とNISA</h3>
+        <label class="check"><input type="checkbox" data-key="tax"> 取り崩し時の税金（20.315%）を計算する</label>
+        <label class="check"><input type="checkbox" data-key="useNisa"> 積立はNISAから優先して使う</label>
+        <div class="when" data-when="useNisa=true">
+          <div class="field" data-key="nisaAnnual" data-min="0" data-max="360" data-step="10" data-unit="万円/年">NISAの年間枠</div>
+          <div class="field" data-key="nisaLife" data-min="0" data-max="1800" data-step="10" data-unit="万円">NISAの生涯枠</div>
+        </div>
+        <p class="hint">取り崩しは特定口座から先に行い、NISAは最後まで非課税で育てます。</p>
+      </section>
+    </aside>
+
+    <!-- ============ 結果 ============ -->
+    <main class="results">
+      <section class="hero" id="hero">
+        <div class="hero-bg" aria-hidden="true"></div>
+        <div class="hero-main">
+          <div class="hero-kicker" id="heroKicker">FIREに届く年齢（中央値）</div>
+          <div class="hero-figure"><span id="heroAge">—</span><small id="heroAgeUnit">歳</small></div>
+          <div class="hero-sub" id="heroSub">—</div>
+          <div class="hero-range" id="heroRange"></div>
+        </div>
+        <div class="hero-gauge">
+          <div class="gauge-ring">
+            <svg viewBox="0 0 120 120" class="gauge" aria-hidden="true">
+              <circle cx="60" cy="60" r="50" class="g-track"/>
+              <circle cx="60" cy="60" r="50" class="g-fill" id="gaugeFill"/>
+            </svg>
+            <div class="gauge-text">
+              <div class="gauge-val" id="gaugeVal">—</div>
+              <div class="gauge-lbl" id="gaugeLbl">資産が持つ確率</div>
+            </div>
+          </div>
+          <div class="gauge-side">
+            <div class="gauge-lbl2" id="gaugeLbl2">資産が持つ確率</div>
+            <div class="status-pill" id="statusPill"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="tiles">
+        <div class="tile">
+          <div class="t-label">目標額</div>
+          <div class="t-value" id="tTarget">—</div>
+          <div class="progress"><div id="tProgress"></div></div>
+          <div class="t-foot" id="tProgressText">—</div>
+        </div>
+        <div class="tile">
+          <div class="t-label" id="tFinalLabel">最後の資産（中央値）</div>
+          <div class="t-value" id="tFinal">—</div>
+          <div class="t-foot" id="tFinalFoot">—</div>
+        </div>
+        <div class="tile">
+          <div class="t-label">FIRE後の取り崩し率</div>
+          <div class="t-value" id="tWR">—</div>
+          <div class="t-foot" id="tWRFoot">—</div>
+        </div>
+        <div class="tile">
+          <div class="t-label">一生で払う税金（中央値）</div>
+          <div class="t-value" id="tTax">—</div>
+          <div class="t-foot" id="tTaxFoot">—</div>
+        </div>
+      </section>
+
+      <p class="verdict" id="verdict"></p>
+      <p class="note-banner hidden" id="noteBanner"></p>
+
+      <nav class="tabs" role="tablist" id="tabs">
+        <button role="tab" data-tab="fan" class="active">資産の推移</button>
+        <button role="tab" data-tab="dist">FIRE年齢の分布</button>
+        <button role="tab" data-tab="history">歴史で試す</button>
+        <button role="tab" data-tab="sens">感度分析</button>
+        <button role="tab" data-tab="table">年表</button>
+        <button role="tab" data-tab="data">データ</button>
+      </nav>
+
+      <section class="panel tabpane" data-pane="fan">
+        <div class="pane-head">
+          <div>
+            <h3>資産の推移（今の価値）</h3>
+            <p class="cap">濃い線が真ん中のシナリオ。帯は上位・下位の何割が入る範囲です。物価上昇を除いた「今のお金の価値」で表示しています。</p>
+          </div>
+          <div class="seg small" id="scaleSeg">
+            <button data-v="lin" class="on">通常</button>
+            <button data-v="log">対数</button>
+          </div>
+        </div>
+        <div class="legend" id="fanLegend"></div>
+        <div class="chart" id="fanChart"></div>
+      </section>
+
+      <section class="panel tabpane hidden" data-pane="dist">
+        <div class="pane-head">
+          <div>
+            <h3 id="distTitle">何歳でFIREに届くか</h3>
+            <p class="cap" id="distCap">シナリオごとの到達年齢の分布。「遅くとも辞める年齢」で辞めたシナリオも含みます。</p>
+          </div>
+        </div>
+        <div class="chart" id="distChart"></div>
+        <div class="by-age" id="byAge"></div>
+      </section>
+
+      <section class="panel tabpane hidden" data-pane="history">
+        <div class="pane-head">
+          <div>
+            <h3>もし、その年に始めていたら</h3>
+            <p class="cap">1871年以降の毎年1月に、今の条件で始めた場合。棒の高さはFIREまでの年数、色は資産が最後まで持ったかどうか。棒を押すとその人生を詳しく見られます。</p>
+          </div>
+        </div>
+        <div class="legend" id="histLegend"></div>
+        <div class="chart" id="histChart"></div>
+        <div class="story" id="story"></div>
+        <div class="chart" id="pathChart"></div>
+      </section>
+
+      <section class="panel tabpane hidden" data-pane="sens">
+        <div class="pane-head">
+          <div>
+            <h3>条件を少し変えたら</h3>
+            <p class="cap" id="sensCap">生活費とFIREの条件を変えたときの、資産が持つ確率（上段）とFIREの年齢（下段）。今の条件は枠で囲んでいます。</p>
+          </div>
+        </div>
+        <div id="sensGrid" class="sens"></div>
+        <div id="sensDetail" class="sens-detail"></div>
+      </section>
+
+      <section class="panel tabpane hidden" data-pane="table">
+        <div class="pane-head">
+          <div>
+            <h3>年表</h3>
+            <p class="cap">「資産の幅」は全シナリオの資産の散らばり。「お金の出入り」「口座の内訳」は真ん中のシナリオ（最後の資産が中央値の人生）の明細です。単位は万円（今の価値）。</p>
+          </div>
+          <button class="text-btn" id="csvBtn">CSVで保存</button>
+        </div>
+        <div class="tview-bar">
+          <div class="seg small tview" id="tview">
+            <button data-v="r" class="on">資産の幅</button>
+            <button data-v="f">お金の出入り</button>
+            <button data-v="a">口座の内訳</button>
+          </div>
+          <label class="check every5"><input type="checkbox" id="every5"> 5年ごと</label>
+        </div>
+        <div class="table-wrap"><table class="ytable" id="yTable"></table></div>
+      </section>
+
+      <section class="panel tabpane hidden" data-pane="data">
+        <div class="pane-head">
+          <div>
+            <h3>全世界株式の155年（指数をつないだ値）</h3>
+            <p class="cap">配当再投資・信託報酬（年0.058%）控除後の円建ての値。「実質」は物価上昇を除いた値。1871年1月＝1。背景の区切りは、使ったデータの切り替わりです。</p>
+          </div>
+          <div class="seg small" id="idxSeg">
+            <button data-v="real" class="on">実質</button>
+            <button data-v="nom">名目</button>
+          </div>
+        </div>
+        <div class="chart" id="idxChart"></div>
+        <h3 class="sub-h">年ごとのリターン（実質）</h3>
+        <div class="chart" id="annChart"></div>
+        <h3 class="sub-h">つなぎ方</h3>
+        <div class="table-wrap"><table class="dtable" id="segTable"></table></div>
+        <div class="data-note">
+          <p><b>想定しているもの：</b>信託報酬が年0.058%程度の、低コストな全世界株式インデックスファンド（時価総額加重）。特定のファンドの実績ではありません。</p>
+          <p><b>実際の全世界株式との違い：</b>世界株の月次データが自由に使える形で手に入らないため、1990年までは米国株、それ以降は先進国株（新興国を含まない）で代用しています。新興国株は世界の時価総額の約1割で、その分だけ実際のファンドとはリターンがずれます。</p>
+        </div>
+        <p class="cap source">出典：Kenneth R. French Data Library（米国・先進国の株式市場）、Robert J. Shiller, Online Data（1926年以前のS&amp;P 500と米国CPI）、米連邦準備制度理事会 H.10（ドル円）、総務省統計局「消費者物価指数」（e-Stat）。総務省のデータは政府標準利用規約に基づき加工して利用しています。過去の結果は将来を保証しません。</p>
+      </section>
+
+      <footer class="foot">
+        <p>このサイトは特定の金融商品をすすめるものではありません。このシミュレーターは学習用です。税制・年金・社会保険は簡略化しています（国民健康保険・住民税の所得割、iDeCo、配当課税などは含みません）。投資判断はご自身で。</p>
+      </footer>
+    </main>
+  </div>
+</div>
+<button class="fab" id="fab" type="button"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg><span id="fabText">条件を変える</span></button>
+<div class="tooltip" id="tooltip" role="tooltip"></div>
+<div class="toast" id="toast"></div>
+
+<script src="data.js?v=8"></script>
+<script src="engine.js?v=8"></script>
+<script src="charts.js?v=8"></script>
+<script src="app.js?v=8"></script>
+</body>
+</html>
