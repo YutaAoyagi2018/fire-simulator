@@ -104,10 +104,22 @@
   }
 
   // ---------- 1本の人生 ----------
-  function target(p) {
+  // 目標額（今の価値）。年金は含めない（保守的）。
+  // 副収入は「◯歳まで」で終わるので、FIRE する年齢 age から副収入が終わるまでの年数 n だけ
+  // 取り崩しが減る分を、取り崩し率 r で割り引いて差し引く:
+  //   目標 = 生活費×12÷r − 副収入×12×(1−(1+r)^−n)÷r
+  // 資産が年 r で増えるなら、副収入の終わる時点でちょうど「生活費×12÷r」に届く額。
+  // 副収入が一生続く（n→∞）と、従来の (生活費−副収入)×12÷r に一致する。
+  function target(p, age) {
     if (!p.targetAuto) return p.target;
-    const need = Math.max(0, p.expense - p.sideIncome) * 12; // 年金は含めない（保守的）
-    return need / (p.swr / 100);
+    const r = p.swr / 100;
+    const full = Math.max(0, p.expense) * 12 / r;
+    const a = age === undefined ? p.age : age;
+    const n = Math.max(0, Math.min(p.sideUntil, p.endAge) - a);
+    if (!(p.sideIncome > 0) || n <= 0) return full;
+    const annuity = r > 0 ? (1 - Math.pow(1 + r, -n)) / r : n;
+    const side = Math.min(p.sideIncome, p.expense) * 12;
+    return Math.max(0, full - side * annuity);
   }
 
   function runPath(sc, p, opt) {
@@ -116,7 +128,6 @@
     const rec = new Float32Array(years + 1); // 各年齢の期首（今の価値）
     const spend = opt.detail ? new Float32Array(years + 1) : null;
     const detail = opt.detail ? [] : null;
-    const tgt = target(p);
     const useTax = p.tax;
     const lifeCap = p.nisaLife, yearCap = p.nisaAnnual;
 
@@ -189,7 +200,7 @@
 
       // --- FIRE の判定（月初）
       if (!retired) {
-        const hit = p.fireMode === "target" ? real >= tgt : age >= p.fireAge - 1e-9;
+        const hit = p.fireMode === "target" ? real >= target(p, age) : age >= p.fireAge - 1e-9;
         if (hit || age >= p.maxWorkAge - 1e-9) {
           retired = true;
           fireT = t;
@@ -322,7 +333,11 @@
       fireAges,
       final: { p10: quantile(finals, 0.1), p50: quantile(finals, 0.5), p90: quantile(finals, 0.9) },
       minSpend: { p10: quantile(minSp, 0.1), p50: quantile(minSp, 0.5) },
-      target: target(p),
+      // 代表の目標額：目標モードなら FIRE 年齢の中央値での額、年齢モードなら辞める年齢での額
+      target: target(p, p.fireMode === "target"
+        ? (fired ? quantile(fireAges, 0.5) : p.maxWorkAge)
+        : Math.min(p.fireAge, p.maxWorkAge)),
+      targetNow: target(p, p.age),
       paths,
     };
   }
@@ -346,11 +361,10 @@
 
   // 一定の年率で増えたときの到達年齢（目安の直線）
   function deterministic(p, realRate) {
-    const tgt = target(p);
     let v = p.nisa + p.taxable;
     const m = Math.pow(1 + realRate, 1 / 12) - 1;
     for (let t = 0; t < (p.maxWorkAge - p.age) * 12; t++) {
-      if (v >= tgt) return p.age + t / 12;
+      if (v >= target(p, p.age + t / 12)) return p.age + t / 12;
       const g = Math.pow(1 + (p.contribGrowth || 0) / 100, Math.floor(t / 12));
       v = v * (1 + m) + p.monthly * g + (t % 12 === 11 ? p.bonus * g : 0);
     }

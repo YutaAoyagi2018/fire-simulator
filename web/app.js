@@ -159,10 +159,16 @@
 
   function run() {
     const p = params();
-    $("#targetText").textContent = man(E.target(p));
     const t0 = performance.now();
     R = E.simulate(D, p);
     if (R.error) { $("#verdict").textContent = R.error; return; }
+    // 副収入があると、目標額は FIRE する年齢で変わる（副収入の残り年数が短いほど高い）
+    const sideAff = p.targetAuto && p.sideIncome > 0 && p.sideUntil > p.age;
+    $("#targetText").textContent = man(R.target);
+    const tn = $("#targetNote");
+    if (tn) tn.textContent = sideAff
+      ? `${p.fireMode === "target" && R.fireAge ? ageTxt(R.fireAge.p50) : Math.min(p.fireAge, p.maxWorkAge) + "歳"}でFIREする場合。副収入が${p.sideUntil}歳で終わる分を見込んでいます（今すぐなら${man(R.targetNow)}、副収入なしなら${man(E.target({ ...p, sideIncome: 0 }))}）`
+      : "";
     // 「歴史で試す」は常に全期間の歴史シナリオで
     H = p.method === "hist" && p.period === "all" && !R.note ? R : E.simulate(D, { ...p, method: "hist", period: "all" });
     sensCache = null;
@@ -561,7 +567,7 @@
     const base = out[curI] && curJ >= 0 && out[curI][curJ];
     const isCur = i === curI && j === curJ;
     const diff = base && !isCur ? Math.round((c.success - base.success) * 100) : null;
-    const tgt = isT ? exp * 12 / (cv / 100) : null;
+    const tgt = isT ? E.target({ ...p, expense: exp, swr: cv, targetAuto: true }, c.fireAge || p.age) : null;
     const dAge = base && !isCur && c.fireAge && base.fireAge ? Math.round(c.fireAge - base.fireAge) : null;
     box.innerHTML = `
       <div class="sd-head">${isCur ? "今の条件" : "タップした条件"}</div>
