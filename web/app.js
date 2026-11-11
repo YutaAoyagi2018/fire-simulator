@@ -201,7 +201,7 @@
       const q = (v) => ((Math.min(hi, Math.max(lo, v)) - lo) / (hi - lo)) * 100;
       const prob = `${p.maxWorkAge}歳までに目標に届く確率 <b>${pct(reach)}</b>`;
       const spread = reach >= 0.9
-        ? "。10%の人生はこれより早く、10%は遅く届きます"
+        ? `。届く年齢は、早いケースで${ageTxt(fa.p10)}、遅いケースで${ageTxt(fa.p90)}です（10回のうち8回はこの間）`
         : reach > 0 ? `。残り${pct(1 - reach)}の人生は届かないまま${p.maxWorkAge}歳で辞めます` : "";
       const lab = (v) => (reach < 0.9 && v >= p.maxWorkAge - 1e-9 ? `${p.maxWorkAge}歳（未達）` : ageTxt(v));
       $("#heroRange").innerHTML = fa ? `
