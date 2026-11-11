@@ -187,20 +187,27 @@
 
     // ヒーロー
     if (isTarget) {
-      $("#heroKicker").textContent = "FIREに届く年齢（真ん中のシナリオ）";
+      // fireAge には「目標に届かず遅くとも辞める年齢で辞めた」シナリオも含まれる
+      const reach = R.earlyRate;
+      const forced = reach < 0.5;
+      $("#heroKicker").textContent = forced ? "仕事を辞める年齢（真ん中のシナリオ）" : "FIREに届く年齢（真ん中のシナリオ）";
       const a = fa ? fa.p50 : null;
-      const forced = R.earlyRate < 0.5;
       $("#heroAge").textContent = a !== null ? Math.floor(a + 1e-9) : "—";
       const left = a !== null ? Math.max(0, Math.round(a - p.age)) : null;
       $("#heroSub").innerHTML = forced
-        ? `目標の前に<b>${p.maxWorkAge}歳</b>で辞めるシナリオが半分以上です`
+        ? `${reach > 0 ? "半分以上のシナリオで" : "どのシナリオでも"}目標に届かず、<b>${p.maxWorkAge}歳</b>で辞めます`
         : a <= p.age + 1e-9 ? `<b>もう目標に届いています</b>` : `あと<b>${left}年</b>・${yearNow + left}年ごろ`;
       const lo = p.age, hi = Math.max(p.maxWorkAge, lo + 1);
       const q = (v) => ((Math.min(hi, Math.max(lo, v)) - lo) / (hi - lo)) * 100;
+      const prob = `${p.maxWorkAge}歳までに目標に届く確率 <b>${pct(reach)}</b>`;
+      const spread = reach >= 0.9
+        ? "。10%の人生はこれより早く、10%は遅く届きます"
+        : reach > 0 ? `。残り${pct(1 - reach)}の人生は届かないまま${p.maxWorkAge}歳で辞めます` : "";
+      const lab = (v) => (reach < 0.9 && v >= p.maxWorkAge - 1e-9 ? `${p.maxWorkAge}歳（未達）` : ageTxt(v));
       $("#heroRange").innerHTML = fa ? `
-        <div>10%の人生はこれより早く、10%は遅く届きます（目標に届く確率 ${pct(R.earlyRate)}）</div>
+        <div>${prob}${spread}</div>` + (reach > 0 ? `
         <div class="rbar"><i style="left:${q(fa.p10)}%;width:${Math.max(1, q(fa.p90) - q(fa.p10))}%"></i><b style="left:${q(fa.p50)}%"></b></div>
-        <div class="rlab"><span>${ageTxt(fa.p10)}</span><span>${ageTxt(fa.p90)}</span></div>` : "";
+        <div class="rlab"><span>${lab(fa.p10)}</span><span>${lab(fa.p90)}</span></div>` : "") : "";
     } else {
       $("#heroKicker").textContent = "FIREする年齢";
       $("#heroAge").textContent = Math.min(p.fireAge, p.maxWorkAge);
@@ -248,8 +255,11 @@
     const methodTxt = R.usedMethod === "hist" ? `過去${nf.format(R.n)}通りの歴史` : R.usedMethod === "boot" ? `${nf.format(R.n)}通りの未来（過去の相場をつないだもの）` : `${nf.format(R.n)}通りの未来（想定利回り${p.mu}%）`;
     const contrib = `毎月${p.monthly}万円${p.bonus ? `とボーナス${p.bonus}万円` : ""}を全世界株式に積み立てると`;
     let v;
-    if (isTarget && fa) {
+    if (isTarget && fa && R.earlyRate >= 0.5) {
       v = `${contrib}、真ん中のシナリオでは<b>${ageTxt(fa.p50)}</b>で目標の${man(R.target)}に届きます。`;
+    } else if (isTarget && fa) {
+      const fr = R.paths.map((x) => x.fireReal).sort((a, b) => a - b);
+      v = `${contrib}、${R.earlyRate > 0 ? "真ん中のシナリオでは" : "どのシナリオでも"}<b>${p.maxWorkAge}歳までに目標の${man(R.target)}に届きません</b>（届く確率 ${pct(R.earlyRate)}）。${p.maxWorkAge}歳で辞めた時点の資産は真ん中のシナリオで${man(E.quantile(fr, 0.5))}です。`;
     } else {
       v = `${contrib}、${Math.min(p.fireAge, p.maxWorkAge)}歳で辞めた時点の資産は真ん中のシナリオで${man(E.quantile(R.paths.map((x) => x.fireReal).sort((a, b) => a - b), 0.5))}です。`;
     }
